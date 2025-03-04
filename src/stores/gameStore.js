@@ -8,6 +8,17 @@ const VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const RANKS = {3: 10, 2: 9, 1: 8, 10: 7, 9: 6, 8: 5, 7: 4, 6: 3, 5: 2, 4: 1};
 const SUIT_RANKS = {denari: 4, coppe: 3, spade: 2, bastoni: 1};
 
+// Funzione per confrontare due carte (ordine assoluto)
+function compareCards(card1, card2) {
+    // Prima confronta per valore numerico (3, 2, 1, ecc.)
+    if (RANKS[card1.value] !== RANKS[card2.value]) {
+        return RANKS[card1.value] > RANKS[card2.value] ? card1 : card2;
+    }
+
+    // A parità di valore, confronta per seme
+    return SUIT_RANKS[card1.suit] > SUIT_RANKS[card2.suit] ? card1 : card2;
+}
+
 export const useGameStore = defineStore('game', () => {
     // State
     const players = ref([]);
@@ -26,22 +37,8 @@ export const useGameStore = defineStore('game', () => {
     const playableCards = computed(() => {
         if (gamePhase.value !== 'playing' || !isHumanTurn.value) return [];
 
-        const hand = players.value[0].hand;
-        if (currentTrick.value.length === 0) {
-            // Lead - can play any card
-            return hand;
-        }
-
-        // Follow - must follow suit if possible
-        const leadSuit = currentTrick.value[0].suit;
-        const hasSuit = hand.some(card => card.suit === leadSuit);
-
-        if (hasSuit) {
-            return hand.filter(card => card.suit === leadSuit);
-        }
-
-        // No cards of the lead suit - can play anything
-        return hand;
+        // Tutte le carte sono giocabili, non ci sono restrizioni di seme
+        return players.value[0].hand;
     });
 
     // Actions
@@ -142,7 +139,7 @@ export const useGameStore = defineStore('game', () => {
                 return SUIT_RANKS[b.suit] - SUIT_RANKS[a.suit];
             }
             // Then by rank
-            return b.rank - a.rank;
+            return RANKS[b.value] - RANKS[a.value];
         });
     }
 
@@ -177,7 +174,7 @@ export const useGameStore = defineStore('game', () => {
         // Count high cards (rank 7 and above) and declare that number
         let highCards = 0;
         for (const card of bot.hand) {
-            if (card.rank >= 7) {
+            if (RANKS[card.value] >= 7) {
                 highCards++;
             }
         }
@@ -201,14 +198,13 @@ export const useGameStore = defineStore('game', () => {
         const cardIndex = player.hand.findIndex(c => c.id === cardId);
         if (cardIndex === -1) return;
 
-        // If it's the human player, check if the card is playable
-        if (player.isHuman && !isCardPlayable(player.hand[cardIndex])) {
-            return;
-        }
-
         // Remove the card from hand and add to current trick
         const card = player.hand.splice(cardIndex, 1)[0];
-        currentTrick.value.push({...card, playerId});
+        const playedCard = {...card, playerId};
+        currentTrick.value.push(playedCard);
+
+        // Aggiorna immediatamente tableCards per mostrare le carte giocate
+        tableCards.value = [...currentTrick.value];
 
         // Move to next player
         currentPlayer.value = (currentPlayer.value + 1) % players.value.length;
@@ -226,63 +222,16 @@ export const useGameStore = defineStore('game', () => {
         saveGameState();
     }
 
-    function isCardPlayable(card) {
-        if (currentTrick.value.length === 0) return true;
-
-        const leadSuit = currentTrick.value[0].suit;
-        const hand = players.value[0].hand;
-
-        // If player has cards of lead suit, they must play one
-        if (hand.some(c => c.suit === leadSuit)) {
-            return card.suit === leadSuit;
-        }
-
-        // Player has no cards of lead suit, can play anything
-        return true;
-    }
-
-    function playBotCard(botIndex) {
-        const bot = players.value[botIndex];
-        let cardToPlay;
-
-        if (currentTrick.value.length === 0) {
-            // Leading - play highest card
-            cardToPlay = [...bot.hand].sort((a, b) => b.rank - a.rank)[0];
-        } else {
-            const leadSuit = currentTrick.value[0].suit;
-            const sameSuitCards = bot.hand.filter(c => c.suit === leadSuit);
-
-            if (sameSuitCards.length > 0) {
-                // Follow suit - play highest card of same suit
-                cardToPlay = [...sameSuitCards].sort((a, b) => b.rank - a.rank)[0];
-            } else {
-                // No cards of lead suit - play lowest card
-                cardToPlay = [...bot.hand].sort((a, b) => a.rank - b.rank)[0];
-            }
-        }
-
-        if (cardToPlay) {
-            playCard(bot.id, cardToPlay.id);
-        }
-    }
-
     function evaluateTrick() {
-        // Find winning card
+        // Trova la carta con il valore assoluto più alto
         let winningCard = currentTrick.value[0];
 
         for (let i = 1; i < currentTrick.value.length; i++) {
             const card = currentTrick.value[i];
+            const betterCard = compareCards(card, winningCard);
 
-            // If same suit, compare ranks
-            if (card.suit === winningCard.suit) {
-                if (card.rank > winningCard.rank) {
-                    winningCard = card;
-                }
-            } else if (card.suit === 'denari') {
-                // Denari trumps other suits
-                if (winningCard.suit !== 'denari') {
-                    winningCard = card;
-                }
+            if (betterCard === card) {
+                winningCard = card;
             }
         }
 
@@ -315,6 +264,24 @@ export const useGameStore = defineStore('game', () => {
         }
 
         saveGameState();
+    }
+
+    function playBotCard(botIndex) {
+        const bot = players.value[botIndex];
+
+        // Strategia semplice: gioca la carta di valore più alto in mano
+        if (bot.hand.length > 0) {
+            let bestCard = bot.hand[0];
+
+            for (let i = 1; i < bot.hand.length; i++) {
+                const betterCard = compareCards(bot.hand[i], bestCard);
+                if (betterCard === bot.hand[i]) {
+                    bestCard = bot.hand[i];
+                }
+            }
+
+            playCard(bot.id, bestCard.id);
+        }
     }
 
     function calculateScore() {

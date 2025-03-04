@@ -3,7 +3,7 @@
   <div class="card" :class="{ 'card-back': !showFront }">
     <div class="card-inner" :class="{ 'flipped': showFront }">
       <div class="card-front">
-        <img v-if="card.image" :src="getImageUrl()" :alt="`${getSuitName(card.suit)} ${card.value}`" class="card-image">
+        <img v-if="card.image && false" :src="getImageUrl()" :alt="`${getSuitName(card.suit)} ${card.value}`" class="card-image">
         <div v-else class="card-placeholder">
           <div class="card-value">{{ card.value }}</div>
           <div class="card-suit" :class="card.suit">{{ getSuitSymbol(card.suit) }}</div>
