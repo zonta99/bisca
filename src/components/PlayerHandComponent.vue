@@ -100,7 +100,6 @@ const getCardRotation = (index, totalCards) => {
 
 .card-wrapper {
   position: absolute;
-  transition: transform 0.3s ease, filter 0.2s;
   transform-origin: bottom center;
   cursor: pointer;
 

@@ -50,8 +50,7 @@
       <!-- Playing area -->
       <div v-if="gameStore.gamePhase === 'playing'" class="playing-area">
         <!-- Indicatore del turno corrente -->
-        <div class="current-player-indicator"
-             :class="{ 'is-human': gameStore.isHumanTurn, 'is-waiting': !gameStore.isHumanTurn }">
+        <div class="current-player-indicator">
           <p>Turno di: <strong>{{ gameStore.currentPlayerObj.name }}</strong></p>
 
           <!-- Informazioni sui giocatori precedenti -->
@@ -74,8 +73,7 @@
               class="table-card-slot"
               :style="{ 
                 transform: getTableCardPosition(index, gameStore.tableCards.length),
-                zIndex: index + 1,
-                opacity: 1
+                zIndex: index + 1
               }"
           >
             <CardComponent :card="card" :show-front="true" />
@@ -416,25 +414,6 @@ const winner = computed(() => {
   background-color: rgba(255, 255, 255, 0.1);
   padding: 2px 8px;
   border-radius: 4px;
-  transition: all 0.3s ease;
-
-  &.winning-card-text {
-    background-color: rgba(255, 215, 0, 0.3);
-    border: 1px solid gold;
-    color: white;
-    font-weight: bold;
-  }
-}
-
-.winning-indicator {
-  margin-left: 5px;
-  animation: float 1.5s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-  100% { transform: translateY(0); }
 }
 
 .table-cards {
@@ -453,13 +432,7 @@ const winner = computed(() => {
 .table-card-slot {
   position: absolute;
   transform-origin: center bottom;
-  transition: transform 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-
-  &:has(.player-indicator.winning-card) {
-    box-shadow: 0 0 15px gold;
-    z-index: 100 !important;
-  }
 }
 
 .player-indicator {
@@ -476,14 +449,12 @@ const winner = computed(() => {
   display: flex;
   align-items: center;
   gap: 5px;
-  transition: all 0.3s ease;
 
   &.winning-card {
     background-color: rgba(255, 215, 0, 0.8);
     color: black;
     font-weight: bold;
     box-shadow: 0 0 10px gold;
-    transform: translateX(-50%) scale(1.05);
   }
 }
 
@@ -506,30 +477,6 @@ const winner = computed(() => {
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 5px;
   font-size: 1.1rem;
-  transition: all 0.3s ease;
-}
-
-.current-player-indicator.is-human {
-  background-color: rgba(199, 44, 65, 0.8);
-  animation: pulse 1.5s infinite;
-  border: 2px solid gold;
-}
-
-.current-player-indicator.is-waiting {
-  background-color: rgba(30, 30, 30, 0.8);
-}
-
-.waiting-message {
-  font-style: italic;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-  color: #ccc;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
 }
 
 .scoring-area {
@@ -606,7 +553,6 @@ const winner = computed(() => {
   padding: 0.8rem 1rem;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 5px;
-  transition: background-color 0.2s ease;
 
   &.winner {
     background-color: rgba(255, 215, 0, 0.3);
@@ -642,14 +588,7 @@ const winner = computed(() => {
   h2 {
     color: gold;
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    animation: pulse 2s infinite;
   }
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
 }
 
 .new-game-btn {
