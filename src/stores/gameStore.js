@@ -73,6 +73,7 @@ export const useGameStore = defineStore('game', () => {
         cardsPerRound.value = 5;
         currentPlayer.value = 0;
         tableCards.value = [];
+        currentTrick.value = [];
 
         // Create and shuffle deck
         createDeck();
@@ -118,6 +119,10 @@ export const useGameStore = defineStore('game', () => {
             player.declaration = null; // Reset declarations to null
         }
 
+        // Clear table cards from previous round
+        tableCards.value = [];
+        currentTrick.value = [];
+
         // Deal cards based on current round
         for (let i = 0; i < cardsPerRound.value; i++) {
             for (let j = 0; j < players.value.length; j++) {
@@ -153,6 +158,10 @@ export const useGameStore = defineStore('game', () => {
                 gamePhase.value = 'playing';
                 currentPlayer.value = 0;
                 leadPlayer.value = 0;
+
+                // Make sure table is clear when starting to play
+                tableCards.value = [];
+                currentTrick.value = [];
             } else {
                 // Move to next player
                 currentPlayer.value = (currentPlayer.value + 1) % players.value.length;
@@ -245,7 +254,6 @@ export const useGameStore = defineStore('game', () => {
 
         // Clear current trick
         tableCards.value = [...currentTrick.value];
-        currentTrick.value = [];
 
         // Check if round is over
         if (players.value.every(p => p.hand.length === 0)) {
@@ -255,6 +263,7 @@ export const useGameStore = defineStore('game', () => {
             // Clear table after a delay
             setTimeout(() => {
                 tableCards.value = [];
+                currentTrick.value = [];
 
                 // If it's a bot's turn, make automatic play
                 if (!players.value[currentPlayer.value].isHuman) {
@@ -311,6 +320,10 @@ export const useGameStore = defineStore('game', () => {
         cardsPerRound.value = Math.max(1, 6 - currentRound.value);
         currentPlayer.value = 0;
         leadPlayer.value = 0;
+
+        // Clear table cards from previous round
+        tableCards.value = [];
+        currentTrick.value = [];
 
         // Reset declarations
         for (const player of players.value) {
